@@ -10,6 +10,7 @@ SEARCH_API = 'https://api.github.com/search/repositories'
 REPOS_PATH = './data'
 DURATION = 90
 STARS = 100
+EXTENSIONS = ['.php']
 
 
 def main():
@@ -29,7 +30,7 @@ def main():
         repos[full_name] = repo['clone_url']
 
     if REPOS_PATH not in glob.glob('./*'):
-        print('{} does not exist, running mkdir'.format(REPOS_PATH))
+        print('{} does not exist, running mkdir\n'.format(REPOS_PATH))
         os.system('mkdir {}'.format(REPOS_PATH))
 
     repos_list = glob.glob(REPOS_PATH + '/*')
@@ -37,13 +38,29 @@ def main():
     for key in repos.keys():
         path = REPOS_PATH + '/' + key.replace('/', '_')
         if path not in repos_list:
-            print('Cloning "{}"...'.format(key))
             clone = 'git clone ' + repos[key] + ' {}'.format(path)
-            print(clone)
             os.system(clone)
+            print(get_code_list(path))
         else:
             msg = '"{}" already exists!!'.format(key)
             print(msg)
+        print('')
+
+
+def grep_source(path):
+    with open(path) as f:
+        while f:
+            for x in f.readline():
+                print(x)
+
+
+def get_code_list(repo_path):
+    codes = []
+    for x in glob.glob(repo_path + '/**/*'):
+        for ex in EXTENSIONS:
+            if x.endswith(ex):
+                codes.append(x)
+    return codes
 
 
 if __name__ == "__main__":
