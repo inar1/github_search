@@ -54,9 +54,12 @@ def main():
     repos_list = glob.glob(REPOS_PATH + '/*')
 
     for key in repos.keys():
-        if not repos[key]['clone_url']:
-            msg = '"{}" Software license not set!!'
-            red_print()
+        red_print('#', '\n')
+        red_print('# Got a repository {} from API search!!'.format(key), '\n')
+        red_print('#' * CMDLINE_WIDTH, '\n\n')
+        if not repos[key]['license']:
+            msg = '"{}" Software license not set!!'.format(key)
+            red_print(msg, '\n\n')
             continue
 
         path = REPOS_PATH + '/' + key.replace('/', '_')
@@ -68,7 +71,7 @@ def main():
             red_print(msg, '\n')
 
         scan_repository(key, path)
-        print('')
+        print('Ending scan repository...\n')
 
 
 def scan_repository(name, path):
