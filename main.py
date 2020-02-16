@@ -11,9 +11,12 @@ REPOS_PATH = './data'
 DURATION = 90
 STARS = 100
 EXTENSIONS = ['.php']
+CMDLINE_WIDTH = 50
 
 
 def main():
+    print_title()
+
     today = datetime.date.today()
     past = today - datetime.timedelta(days=DURATION)
 
@@ -30,7 +33,7 @@ def main():
         repos[full_name] = repo['clone_url']
 
     if REPOS_PATH not in glob.glob('./*'):
-        print('{} does not exist, running mkdir\n'.format(REPOS_PATH))
+        red_print('{} does not exist, running mkdir\n'.format(REPOS_PATH))
         os.system('mkdir {}'.format(REPOS_PATH))
 
     repos_list = glob.glob(REPOS_PATH + '/*')
@@ -40,23 +43,26 @@ def main():
         if path not in repos_list:
             clone = 'git clone ' + repos[key] + ' {}'.format(path)
             os.system(clone)
-            scan_repository(path)
+            scan_repository(key, path)
         else:
             msg = '"{}" already exists!!'.format(key)
-            print(msg)
+            red_print(msg)
         print('')
 
 
-def scan_repository(repo):
-    print('Scanning repository')
-    codes = get_code_list(repo)
+def scan_repository(name, path):
+    print('\n# Scanning repository {}...'.format(name))
+    codes = get_code_list(path)
+    print('# Repository {} has {} files to be scanned...'.format(name,
+                                                                 len(codes)))
+    red_print('#' * CMDLINE_WIDTH + '\n')
     for c in codes:
         grep_source(c)
 
 
 def grep_source(path):
     with open(path) as f:
-        print('Scanning {}'.format(path.replace(REPOS_PATH, '')))
+        print('Scanning {}...'.format(path.replace(REPOS_PATH, '')))
         line = f.readline()
         while line:
             print(line)
@@ -71,6 +77,16 @@ def get_code_list(path):
             if x.endswith(ex):
                 codes.append(x)
     return codes
+
+
+def red_print(strings):
+    print('\033[31m' + strings + '\033[0m')
+
+
+def print_title():
+    print('#' * CMDLINE_WIDTH)
+    print('# Script started')
+    print('#' * CMDLINE_WIDTH)
 
 
 if __name__ == "__main__":
