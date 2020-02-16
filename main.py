@@ -3,16 +3,17 @@
 import requests
 import datetime
 import glob
+import sys
 import os
 
 
 SEARCH_API = 'https://api.github.com/search/repositories'
 CMDLINE_WIDTH = 80
 REPOS_PATH = './data'
-DURATION = 90
+DURATION = 91
 STARS = 100
 EXTENSIONS = ['.php']
-QUEUE_LENGTH = 5
+QUEUE_LENGTH = 10
 
 GREP_FUNC = [
     'echo'
@@ -38,7 +39,7 @@ def main():
         repos[full_name] = repo['clone_url']
 
     if REPOS_PATH not in glob.glob('./*'):
-        red_print('{} does not exist, running mkdir\n'.format(REPOS_PATH))
+        red_print('{} does not exist, running mkdir'.format(REPOS_PATH), '\n')
         os.system('mkdir {}'.format(REPOS_PATH))
 
     repos_list = glob.glob(REPOS_PATH + '/*')
@@ -50,17 +51,18 @@ def main():
             os.system(clone)
         else:
             msg = '"{}" already exists!!'.format(key)
-            red_print(msg)
+            red_print(msg, '\n')
 
         scan_repository(key, path)
         print('')
 
 
 def scan_repository(name, path):
-    red_print('\n# Scanning repository {}...'.format(name))
+    red_print('\n# Scanning repository {}...'.format(name), '\n')
     codes = get_code_list(path)
-    red_print('# {} has {} files to be scanned...'.format(name, len(codes)))
-    red_print('#' * CMDLINE_WIDTH + '\n')
+    msg = '# {} has {} files to be scanned...'.format(name, len(codes))
+    red_print(msg, '\n')
+    red_print('#' * CMDLINE_WIDTH, '\n\n')
     for c in codes:
         grep_source(c)
 
@@ -71,18 +73,21 @@ def grep_source(path):
         line_queue = []
         filename = path.replace(REPOS_PATH, '')
         print('Scanning {}...'.format(filename))
+
         line = f.readline()
-        line_queue = insert(line_queue, line)
         if not line:
-            red_print('No content in {}\n'.format(filename))
+            red_print('No content in {}\n'.format(filename), '\n')
             return
+
+        line_queue = insert(line_queue, line)
         while line:
-            line_queue = insert(line_queue, line)
             for func in GREP_FUNC:
                 if func in line:
                     print_scan_result(line_queue, count)
             line = f.readline()
+            line_queue = insert(line_queue, line)
             count += 1
+        print('')
 
 
 def insert(line_queue, new_item):
@@ -94,9 +99,9 @@ def insert(line_queue, new_item):
 
 def print_scan_result(line_queue, line_num):
     queue_len = len(line_queue)
-    for count, line in enumerate(line_queue):
-        msg = str(line_num - queue_len + int(count) + 1) + ':' + '\t' + line
-        print(msg, end="")
+    for index, line in enumerate(line_queue):
+        msg = str(line_num - queue_len + int(index) + 1) + ':' + '\t' + line
+        red_print(msg)
     print('')
 
 
@@ -109,8 +114,8 @@ def get_code_list(path):
     return codes
 
 
-def red_print(strings):
-    print('\033[31m' + strings + '\033[0m')
+def red_print(strings, suffix=''):
+    sys.stdout.write('\033[31m' + strings + '\033[0m' + suffix)
 
 
 def print_title():
