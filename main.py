@@ -7,11 +7,16 @@ import os
 
 
 SEARCH_API = 'https://api.github.com/search/repositories'
+CMDLINE_WIDTH = 80
 REPOS_PATH = './data'
 DURATION = 90
 STARS = 100
 EXTENSIONS = ['.php']
-CMDLINE_WIDTH = 50
+QUEUE_LENGTH = 5
+
+GREP_FUNC = [
+    'echo'
+]
 
 
 def main():
@@ -43,18 +48,18 @@ def main():
         if path not in repos_list:
             clone = 'git clone ' + repos[key] + ' {}'.format(path)
             os.system(clone)
-            scan_repository(key, path)
         else:
             msg = '"{}" already exists!!'.format(key)
             red_print(msg)
+
+        scan_repository(key, path)
         print('')
 
 
 def scan_repository(name, path):
-    print('\n# Scanning repository {}...'.format(name))
+    red_print('\n# Scanning repository {}...'.format(name))
     codes = get_code_list(path)
-    print('# Repository {} has {} files to be scanned...'.format(name,
-                                                                 len(codes)))
+    red_print('# {} has {} files to be scanned...'.format(name, len(codes)))
     red_print('#' * CMDLINE_WIDTH + '\n')
     for c in codes:
         grep_source(c)
@@ -62,12 +67,37 @@ def scan_repository(name, path):
 
 def grep_source(path):
     with open(path) as f:
-        print('Scanning {}...'.format(path.replace(REPOS_PATH, '')))
+        count = 1
+        line_queue = []
+        filename = path.replace(REPOS_PATH, '')
+        print('Scanning {}...'.format(filename))
         line = f.readline()
+        line_queue = insert(line_queue, line)
+        if not line:
+            red_print('No content in {}\n'.format(filename))
+            return
         while line:
-            print(line)
+            line_queue = insert(line_queue, line)
+            for func in GREP_FUNC:
+                if func in line:
+                    print_scan_result(line_queue, count)
             line = f.readline()
-            break
+            count += 1
+
+
+def insert(line_queue, new_item):
+    if len(line_queue) >= QUEUE_LENGTH:
+        line_queue.pop(0)
+    line_queue.append(new_item)
+    return line_queue
+
+
+def print_scan_result(line_queue, line_num):
+    queue_len = len(line_queue)
+    for count, line in enumerate(line_queue):
+        msg = str(line_num - queue_len + int(count) + 1) + ':' + '\t' + line
+        print(msg, end="")
+    print('')
 
 
 def get_code_list(path):
@@ -84,7 +114,7 @@ def red_print(strings):
 
 
 def print_title():
-    print('#' * CMDLINE_WIDTH)
+    print('\n' + '#' * CMDLINE_WIDTH)
     print('# Script started')
     print('#' * CMDLINE_WIDTH)
 
