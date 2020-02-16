@@ -40,23 +40,32 @@ def main():
         if path not in repos_list:
             clone = 'git clone ' + repos[key] + ' {}'.format(path)
             os.system(clone)
-            print(get_code_list(path))
+            scan_repository(path)
         else:
             msg = '"{}" already exists!!'.format(key)
             print(msg)
         print('')
 
 
+def scan_repository(path):
+    codes = get_code_list(path)
+    for c in codes:
+        grep_source(c)
+
+
 def grep_source(path):
     with open(path) as f:
-        while f:
-            for x in f.readline():
-                print(x)
+        print('Scanning {}'.format(path.replace(REPOS_PATH, '')))
+        line = f.readline()
+        while line:
+            print(line)
+            line = f.readline()
+            break
 
 
-def get_code_list(repo_path):
+def get_code_list(path):
     codes = []
-    for x in glob.glob(repo_path + '/**/*'):
+    for x in glob.glob(path + '/**/*'):
         for ex in EXTENSIONS:
             if x.endswith(ex):
                 codes.append(x)
