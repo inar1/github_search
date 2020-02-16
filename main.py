@@ -47,8 +47,9 @@ def main():
         print('')
 
 
-def scan_repository(path):
-    codes = get_code_list(path)
+def scan_repository(repo):
+    print('Scanning repository')
+    codes = get_code_list(repo)
     for c in codes:
         grep_source(c)
 
