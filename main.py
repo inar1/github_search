@@ -10,13 +10,21 @@ import os
 SEARCH_API = 'https://api.github.com/search/repositories'
 CMDLINE_WIDTH = 80
 REPOS_PATH = './data'
-DURATION = 91
+DURATION = 2
 STARS = 100
 EXTENSIONS = ['.php']
 QUEUE_LENGTH = 10
 
 GREP_FUNC = [
+    # XSS
     'echo'
+
+    # Command Execution
+    # 'exec(',
+    # 'passthru(',
+    # 'system(',
+    # 'shell_exec(',
+    # 'popen('
 ]
 
 
@@ -29,14 +37,15 @@ def main():
     api_params = '?q=web'
     api_params += '+language:{}'.format('php')
     api_params += '+stars:>{}'.format(STARS)
-    api_params += '+pushed:{}'.format(past)
+    api_params += '+pushed:>{}'.format(past)
 
     res = requests.get(SEARCH_API + api_params)
     data = res.json()
     repos = {}
     for repo in data['items']:
         full_name = repo['full_name']
-        repos[full_name] = repo['clone_url']
+        repos[full_name] = {'clone_url': repo['clone_url'],
+                            'license': repo['license']}
 
     if REPOS_PATH not in glob.glob('./*'):
         red_print('{} does not exist, running mkdir'.format(REPOS_PATH), '\n')
@@ -45,9 +54,14 @@ def main():
     repos_list = glob.glob(REPOS_PATH + '/*')
 
     for key in repos.keys():
+        if not repos[key]['clone_url']:
+            msg = '"{}" Software license not set!!'
+            red_print()
+            continue
+
         path = REPOS_PATH + '/' + key.replace('/', '_')
         if path not in repos_list:
-            clone = 'git clone ' + repos[key] + ' {}'.format(path)
+            clone = 'git clone ' + repos[key]['clone_url'] + ' {}'.format(path)
             os.system(clone)
         else:
             msg = '"{}" already exists!!'.format(key)
